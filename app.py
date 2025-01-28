@@ -2,6 +2,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.slider import Slider
@@ -9,6 +10,7 @@ from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.graphics import Line, Ellipse
 from kivy.clock import Clock
+from kivy.core.window import Window
 
 # Pendulum simulation code
 def equations(t, y, m1, m2, L1, L2, g):
@@ -52,62 +54,80 @@ class PendulumSimulation(Widget):
     def draw_pendulum(self):
         self.canvas.clear()
         with self.canvas:
-            x1 = 300 + self.L1 * 100 * np.sin(self.theta1)
-            y1 = 300 - self.L1 * 100 * np.cos(self.theta1)
+            x1 = self.width / 2 + self.L1 * 100 * np.sin(self.theta1)
+            y1 = self.height / 2 - self.L1 * 100 * np.cos(self.theta1)
             x2 = x1 + self.L2 * 100 * np.sin(self.theta2)
             y2 = y1 - self.L2 * 100 * np.cos(self.theta2)
-            Line(points=[300, 300, x1, y1], width=2)
+            Line(points=[self.width / 2, self.height / 2, x1, y1], width=2)
             Line(points=[x1, y1, x2, y2], width=2)
             Ellipse(pos=(x1 - 10, y1 - 10), size=(20, 20))
             Ellipse(pos=(x2 - 10, y2 - 10), size=(20, 20))
 
 class PendulumApp(App):
     def build(self):
-        layout = BoxLayout(orientation='vertical')
+        # Main layout (vertical)
+        main_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
 
-        self.simulation = PendulumSimulation()
-        layout.add_widget(self.simulation)
+        # Pendulum simulation widget
+        self.simulation = PendulumSimulation(size_hint=(1, 0.7))
+        main_layout.add_widget(self.simulation)
 
-        self.m1_input = TextInput(text='1.0', multiline=False)
-        self.m1_slider = Slider(min=0.1, max=10, value=1.0)
+        # Control panel (horizontal)
+        control_panel = BoxLayout(orientation='horizontal', size_hint=(1, 0.3), spacing=10)
+
+        # Left side: Sliders and inputs for masses and lengths
+        left_panel = GridLayout(cols=2, spacing=10, size_hint=(0.5, 1))
+
+        left_panel.add_widget(Label(text='Mass 1'))
+        self.m1_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
+        left_panel.add_widget(self.m1_input)
+        self.m1_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
         self.m1_slider.bind(value=self.on_m1_change)
-        layout.add_widget(Label(text='Mass 1'))
-        layout.add_widget(self.m1_input)
-        layout.add_widget(self.m1_slider)
+        left_panel.add_widget(self.m1_slider)
 
-        self.m2_input = TextInput(text='1.0', multiline=False)
-        self.m2_slider = Slider(min=0.1, max=10, value=1.0)
+        left_panel.add_widget(Label(text='Mass 2'))
+        self.m2_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
+        left_panel.add_widget(self.m2_input)
+        self.m2_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
         self.m2_slider.bind(value=self.on_m2_change)
-        layout.add_widget(Label(text='Mass 2'))
-        layout.add_widget(self.m2_input)
-        layout.add_widget(self.m2_slider)
+        left_panel.add_widget(self.m2_slider)
 
-        self.L1_input = TextInput(text='1.0', multiline=False)
-        self.L1_slider = Slider(min=0.1, max=10, value=1.0)
+        left_panel.add_widget(Label(text='Length 1'))
+        self.L1_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
+        left_panel.add_widget(self.L1_input)
+        self.L1_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
         self.L1_slider.bind(value=self.on_L1_change)
-        layout.add_widget(Label(text='Length 1'))
-        layout.add_widget(self.L1_input)
-        layout.add_widget(self.L1_slider)
+        left_panel.add_widget(self.L1_slider)
 
-        self.L2_input = TextInput(text='1.0', multiline=False)
-        self.L2_slider = Slider(min=0.1, max=10, value=1.0)
+        left_panel.add_widget(Label(text='Length 2'))
+        self.L2_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
+        left_panel.add_widget(self.L2_input)
+        self.L2_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
         self.L2_slider.bind(value=self.on_L2_change)
-        layout.add_widget(Label(text='Length 2'))
-        layout.add_widget(self.L2_input)
-        layout.add_widget(self.L2_slider)
+        left_panel.add_widget(self.L2_slider)
 
-        self.g_input = TextInput(text='9.81', multiline=False)
-        self.g_slider = Slider(min=1, max=20, value=9.81)
+        control_panel.add_widget(left_panel)
+
+        # Right side: Gravity input and start button
+        right_panel = BoxLayout(orientation='vertical', spacing=10, size_hint=(0.5, 1))
+
+        right_panel.add_widget(Label(text='Gravity'))
+        self.g_input = TextInput(text='9.81', multiline=False, size_hint=(1, None), height=30)
+        right_panel.add_widget(self.g_input)
+        self.g_slider = Slider(min=1, max=20, value=9.81, size_hint=(1, None), height=30)
         self.g_slider.bind(value=self.on_g_change)
-        layout.add_widget(Label(text='Gravity'))
-        layout.add_widget(self.g_input)
-        layout.add_widget(self.g_slider)
+        right_panel.add_widget(self.g_slider)
 
-        start_button = Button(text='Start Simulation')
+        start_button = Button(text='Start Simulation', size_hint=(1, None), height=50)
         start_button.bind(on_press=self.start_simulation)
-        layout.add_widget(start_button)
+        right_panel.add_widget(start_button)
 
-        return layout
+        control_panel.add_widget(right_panel)
+
+        # Add control panel to main layout
+        main_layout.add_widget(control_panel)
+
+        return main_layout
 
     def on_m1_change(self, instance, value):
         self.simulation.m1 = value
@@ -133,4 +153,5 @@ class PendulumApp(App):
         self.simulation.start_simulation()
 
 if __name__ == '__main__':
+    Window.clearcolor = (1, 1, 1, 1)  # Set background color to white
     PendulumApp().run()
