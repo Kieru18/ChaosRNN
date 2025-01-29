@@ -229,8 +229,11 @@ class DoublePendulumSimulation(QMainWindow):
             self.tip_x.append(x2[frame])
             self.tip_y.append(y2[frame])
             self.tip_line.set_data(self.tip_x, self.tip_y)
+            if frame == 0:
+                self.tip_x.clear()
+                self.tip_y.clear()
             return self.line, self.tip_line
-
+            
         self.anim = FuncAnimation(self.canvas.figure, update, frames=len(t_eval), interval=20, blit=True)
         self.canvas.draw()
 
