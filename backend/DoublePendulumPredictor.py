@@ -7,7 +7,7 @@ import os
 
 NUM_TRAJECTORIES = 120
 T_SPAN = (0, 10)
-T_EVAL = np.linspace(0, 10, 1000)
+T_EVAL = np.linspace(0, 10, 400)
 SEQ_LEN = 10
 PATH = 'backend\\models\\trained_modelLSTM_50.keras'
 MODEL = 'LSTM'
@@ -98,8 +98,11 @@ class DoublePendulumPredictor:
         sliced_solution = np.column_stack((solution.y[0], solution.y[1], solution.y[2], solution.y[3]))
         return sliced_solution
     
-    def predict(self):
-        predict_path = self.generate_solution()
+    def predict(self, predict_path=None):
+
+        if predict_path is None:
+            predict_path = self.generate_solution()
+        
         X, y = [], []
         for i in range(len(predict_path) - self.sequence_length):
             X.append(predict_path[i:i + self.sequence_length])

@@ -22,6 +22,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.mass2 = 1.0
         self.gravity = 9.81
         self.simulation_running = False
+        self.prediction_running = False
 
         self.theta1 = np.pi / 2
         self.theta2 = np.pi / 2
@@ -59,6 +60,10 @@ class DoublePendulumSimulation(QMainWindow):
         self.predict_button = QPushButton("Predict")
         self.predict_button.clicked.connect(self.predictTrajectory)
         right_layout.addWidget(self.predict_button)
+
+        self.stop_predict_button = QPushButton("Stop Prediction")
+        self.stop_predict_button.clicked.connect(self.stopPrediction)
+        right_layout.addWidget(self.stop_predict_button)
 
         main_layout.addWidget(right_widget, 1)  # Set stretch factor to 1 for right_widget
 
@@ -241,6 +246,7 @@ class DoublePendulumSimulation(QMainWindow):
             return [theta1_dot, z1_dot, theta2_dot, z2_dot]
 
         sol = solve_ivp(equations, t_span, y0, t_eval=t_eval)
+        self.sol = sol
 
         theta1, theta2 = sol.y[0], sol.y[2]
         x1 = self.length1 * np.sin(theta1)
@@ -325,12 +331,20 @@ class DoublePendulumSimulation(QMainWindow):
         self.canvas.draw()
 
     def predictTrajectory(self):
+        if self.prediction_running:
+            return
+
+        self.prediction_running = True
+        self.predict_button.setEnabled(False)
+
         predictor = DoublePendulumPredictor(self.length1, self.length2, self.mass1, self.mass2, self.gravity, 
                                             self.theta1, self.theta2, 0, 0)
         y_test = predictor.generate_solution()
-        y_pred = predictor.predict()
 
-        theta1_pred, theta2_pred = y_pred[:, 0], y_pred[:, 1]
+        pred = np.column_stack((self.sol.y[0], self.sol.y[1], self.sol.y[2], self.sol.y[3])) # sus
+        y_pred = predictor.predict(pred)
+
+        theta1_pred, theta2_pred = y_pred[:, 0], y_pred[:, 2]
         x1_pred = self.length1 * np.sin(theta1_pred)
         y1_pred = -self.length1 * np.cos(theta1_pred)
         x2_pred = x1_pred + self.length2 * np.sin(theta2_pred)
@@ -358,10 +372,15 @@ class DoublePendulumSimulation(QMainWindow):
         self.pred_anim = FuncAnimation(self.pred_canvas.figure, update_pred, frames=len(theta1_pred), interval=20, blit=True)
         self.pred_canvas.draw()
 
+    def stopPrediction(self):
+        if hasattr(self, 'pred_anim'):
+            self.pred_anim.event_source.stop()
+        self.prediction_running = False
+        self.predict_button.setEnabled(True)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = DoublePendulumSimulation()
     window.show()
     sys.exit(app.exec_())
-        
