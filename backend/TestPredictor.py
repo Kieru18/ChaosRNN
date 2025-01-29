@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-import random
+from matplotlib.animation import FuncAnimation
+import numpy as np
 from DoublePendulumPredictor import DoublePendulumPredictor
 
 MASS_1 = 1.0
@@ -20,15 +21,19 @@ def showcase(y_test, y_pred, theta_num):
     plt.grid()
     plt.show()
 
+
 if __name__ == "__main__":
-    predictor = DoublePendulumPredictor(LENGTH_1, LENGTH_2, MASS_1, MASS_2, GRAVITY, 1,1,0,0)
+    predictor = DoublePendulumPredictor(LENGTH_1-0.3, LENGTH_2-0.4, MASS_1+2, MASS_2+4, GRAVITY+4, 
+                                        np.pi * 0.66,
+                                        np.pi * 1.1412, 
+                                        1, 1)
     
     y_test = predictor.generate_solution()
     y_pred = predictor.predict()
     
-    start_index = random.randint(0, len(y_test) - 500)
-    y_test_sample = y_test[start_index:start_index + 500]
+    start_index = 0
+    y_test_sample = y_test[start_index+10:start_index + 510]
     y_pred_sample = y_pred[start_index:start_index + 500]
     
-    showcase(y_test, y_pred, 0)
-    showcase(y_test, y_pred, 1)
+    showcase(y_test_sample, y_pred_sample, 0)
+    showcase(y_test_sample, y_pred_sample, 1)

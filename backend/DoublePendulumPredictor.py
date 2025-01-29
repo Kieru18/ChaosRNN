@@ -5,11 +5,12 @@ from tensorflow.keras.layers import SimpleRNN, Dense
 from scipy.integrate import solve_ivp
 import os
 
-NUM_TRAJECTORIES = 100
+NUM_TRAJECTORIES = 120
 T_SPAN = (0, 10)
-T_EVAL = np.linspace(0, 10, 600)
+T_EVAL = np.linspace(0, 10, 1000)
 SEQ_LEN = 10
-PATH = 'models/trained_model.keras'
+PATH = 'models/trained_modelLSTM_50.keras'
+MODEL = 'LSTM'
 
 class DoublePendulumPredictor:
     def __init__(self, length_1, length_2, mass_1, mass_2, gravity, theta_1, theta_2, velocity_1, velocity_2, model_path=PATH):
@@ -33,15 +34,19 @@ class DoublePendulumPredictor:
         self.model = load_model(self.model_path)
         print("Model wczytany.")
         
-    def compose_model(self, units=64, epochs=20, batch_size=32):
+    def compose_model(self, units=64, epochs=50, batch_size=32):
         x_train, y_train = self.get_training_set()
-        model = tf.keras.Sequential([
-            tf.keras.layers.Input(shape=(self.sequence_length, x_train.shape[2])),
-            tf.keras.layers.SimpleRNN(units, activation='tanh', return_sequences=True),
-            tf.keras.layers.SimpleRNN(units, activation='tanh'),
-            tf.keras.layers.Dense(y_train.shape[1])
-        ])
-        model.compile(optimizer='adam', loss=tf.keras.losses.MeanSquaredError(), metrics=['mae'])
+        match MODEL:
+            case 'LSTM':
+                model = self.get_LSTM(x_train.shape[2], y_train.shape[1], units)
+                model.compile(optimizer='adam', loss=tf.keras.losses.Huber(delta=1.0), metrics=['mae'])
+            case 'SRNN':
+                model.compile(optimizer='adam', loss=tf.keras.losses.MeanSquaredError(), metrics=['mae'])
+                model = self.get_simpleRNN(x_train.shape[2], y_train.shape[1], units)
+            case _:
+                model = self.get_simpleRNN(x_train.shape[2], y_train.shape[1], units)
+                model.compile(optimizer='adam', loss=tf.keras.losses.MeanSquaredError(), metrics=['mae'])
+       
         model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2)
         model.save(self.model_path)
         self.model = model
@@ -49,7 +54,8 @@ class DoublePendulumPredictor:
     def get_training_set(self):
         trajectories = []
         for i in range(NUM_TRAJECTORIES):
-            pendulum_position = [np.pi + np.random.uniform(-1.0, 1.0), 0, np.pi + np.random.uniform(-1.0, 1.0), 0]
+            pendulum_position = [np.pi + np.random.uniform(-1.0, 1.0), 0.0, np.pi + np.random.uniform(-1.0, 1.0), 0.0]
+                
             solution = solve_ivp(fun=self.pendulum_equation, 
                         t_span=T_SPAN, 
                         y0=pendulum_position,
@@ -98,3 +104,19 @@ class DoublePendulumPredictor:
         X = np.array(X)
         return self.model.predict(X)
         
+    def get_simpleRNN(self, input_shape, output_shape, units):
+        return tf.keras.Sequential([
+            tf.keras.layers.Input(shape=(self.sequence_length, input_shape)),
+            tf.keras.layers.SimpleRNN(units, activation='tanh', return_sequences=True),
+            tf.keras.layers.SimpleRNN(units, activation='tanh'),
+            tf.keras.layers.Dense(output_shape)
+        ])
+    
+    def get_LSTM(self, input_shape, output_shape, units):
+        return tf.keras.Sequential([
+            tf.keras.layers.Input(shape=(self.sequence_length, input_shape)),
+            tf.keras.layers.LSTM(units, activation='tanh', return_sequences=True),
+            tf.keras.layers.LSTM(units, activation='tanh'),
+            tf.keras.layers.Dense(output_shape)
+        ])
+    
