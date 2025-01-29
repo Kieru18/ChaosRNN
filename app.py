@@ -271,6 +271,7 @@ class DoublePendulumSimulation(QMainWindow):
         if event.inaxes != self.ax:
             return
         self.dragging = True
+        self.dragged_arm = None
         self.updateInitialPosition(event)
 
     def onMouseRelease(self, event):
@@ -284,7 +285,12 @@ class DoublePendulumSimulation(QMainWindow):
     def updateInitialPosition(self, event):
         x, y = event.xdata, event.ydata
         r1 = np.sqrt(x**2 + y**2)
-        if r1 <= self.length1:
+        if self.dragged_arm is None:
+            if r1 <= self.length1:
+                self.dragged_arm = 'inner'
+            else:
+                self.dragged_arm = 'outer'
+        if self.dragged_arm == 'inner':
             self.theta1 = np.arctan2(x, -y)
         else:
             r2 = np.sqrt((x - self.length1 * np.sin(self.theta1))**2 + (y + self.length1 * np.cos(self.theta1))**2)
