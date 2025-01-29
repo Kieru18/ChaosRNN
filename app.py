@@ -22,6 +22,9 @@ class DoublePendulumSimulation(QMainWindow):
         self.gravity = 9.81
         self.simulation_running = False
 
+        self.theta1 = np.pi / 2
+        self.theta2 = np.pi / 2
+
         self.initUI()
 
     def initUI(self):
@@ -45,6 +48,12 @@ class DoublePendulumSimulation(QMainWindow):
         main_layout.addStretch(1)  # Add stretch to push left_widget to the left half
 
         self.setCentralWidget(main_widget)
+
+        self.canvas.mpl_connect('button_press_event', self.onMousePress)
+        self.canvas.mpl_connect('button_release_event', self.onMouseRelease)
+        self.canvas.mpl_connect('motion_notify_event', self.onMouseMove)
+
+        self.updatePlot()
 
     def createControlPanel(self):
         control_layout = QVBoxLayout()
@@ -129,21 +138,25 @@ class DoublePendulumSimulation(QMainWindow):
         self.length1 = self.length1_slider.value() / 100.0
         self.length1_input.setText(str(self.length1))
         self.updatePlotLimits()
+        self.updatePlot()
 
     def updateLength1FromInput(self):
         self.length1 = float(self.length1_input.text())
         self.length1_slider.setValue(int(self.length1 * 100))
         self.updatePlotLimits()
+        self.updatePlot()
 
     def updateLength2(self):
         self.length2 = self.length2_slider.value() / 100.0
         self.length2_input.setText(str(self.length2))
         self.updatePlotLimits()
+        self.updatePlot()
 
     def updateLength2FromInput(self):
         self.length2 = float(self.length2_input.text())
         self.length2_slider.setValue(int(self.length2 * 100))
         self.updatePlotLimits()
+        self.updatePlot()
 
     def updateMass1(self):
         self.mass1 = self.mass1_slider.value() / 100.0
@@ -196,7 +209,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.updatePlotLimits()
         self.ax.set_title("Double Pendulum Simulation")
 
-        y0 = [np.pi / 2, 0, np.pi / 2, 0]
+        y0 = [self.theta1, 0, self.theta2, 0]
         t_span = (0, 10)
         t_eval = np.linspace(0, 10, 400)
 
@@ -256,6 +269,43 @@ class DoublePendulumSimulation(QMainWindow):
         self.updatePlotLimits()
         self.ax.set_title("Double Pendulum Simulation")
         self.canvas.draw()
+
+    def onMousePress(self, event):
+        if event.inaxes != self.ax:
+            return
+        self.dragging = True
+        self.updateInitialPosition(event)
+
+    def onMouseRelease(self, event):
+        self.dragging = False
+
+    def onMouseMove(self, event):
+        if not hasattr(self, 'dragging') or not self.dragging:
+            return
+        self.updateInitialPosition(event)
+
+    def updateInitialPosition(self, event):
+        x, y = event.xdata, event.ydata
+        r1 = np.sqrt(x**2 + y**2)
+        if r1 <= self.length1:
+            self.theta1 = np.arctan2(x, -y)
+        else:
+            r2 = np.sqrt((x - self.length1 * np.sin(self.theta1))**2 + (y + self.length1 * np.cos(self.theta1))**2)
+            if r2 <= self.length2:
+                self.theta2 = np.arctan2(x - self.length1 * np.sin(self.theta1), -(y + self.length1 * np.cos(self.theta1)))
+        self.updatePlot()
+
+    def updatePlot(self):
+        self.ax.clear()
+        self.updatePlotLimits()
+        self.ax.set_title("Double Pendulum Simulation")
+        x1 = self.length1 * np.sin(self.theta1)
+        y1 = -self.length1 * np.cos(self.theta1)
+        x2 = x1 + self.length2 * np.sin(self.theta2)
+        y2 = y1 - self.length2 * np.cos(self.theta2)
+        self.ax.plot([0, x1, x2], [0, y1, y2], 'o-', lw=2)
+        self.canvas.draw()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
