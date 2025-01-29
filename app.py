@@ -35,9 +35,7 @@ class DoublePendulumSimulation(QMainWindow):
         left_layout.addWidget(self.canvas)
 
         self.ax = self.canvas.figure.add_subplot(111)
-        self.ax.set_aspect('equal')
-        self.ax.set_xlim(-2, 2)
-        self.ax.set_ylim(-2, 2)
+        self.updatePlotLimits()
         self.ax.set_title("Double Pendulum Simulation")
 
         control_panel = self.createControlPanel()
@@ -130,18 +128,22 @@ class DoublePendulumSimulation(QMainWindow):
     def updateLength1(self):
         self.length1 = self.length1_slider.value() / 100.0
         self.length1_input.setText(str(self.length1))
+        self.updatePlotLimits()
 
     def updateLength1FromInput(self):
         self.length1 = float(self.length1_input.text())
         self.length1_slider.setValue(int(self.length1 * 100))
+        self.updatePlotLimits()
 
     def updateLength2(self):
         self.length2 = self.length2_slider.value() / 100.0
         self.length2_input.setText(str(self.length2))
+        self.updatePlotLimits()
 
     def updateLength2FromInput(self):
         self.length2 = float(self.length2_input.text())
         self.length2_slider.setValue(int(self.length2 * 100))
+        self.updatePlotLimits()
 
     def updateMass1(self):
         self.mass1 = self.mass1_slider.value() / 100.0
@@ -167,6 +169,12 @@ class DoublePendulumSimulation(QMainWindow):
         self.gravity = float(self.gravity_input.text())
         self.gravity_slider.setValue(int(self.gravity * 10))
 
+    def updatePlotLimits(self):
+        total_length = self.length1 + self.length2 + 0.2
+        self.ax.set_xlim(-total_length, total_length)
+        self.ax.set_ylim(-total_length, total_length)
+        self.canvas.draw()
+
     def startSimulation(self):
         if self.simulation_running:
             return
@@ -175,9 +183,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.start_button.setEnabled(False)
 
         self.ax.clear()
-        self.ax.set_aspect('equal')
-        self.ax.set_xlim(-2, 2)
-        self.ax.set_ylim(-2, 2)
+        self.updatePlotLimits()
         self.ax.set_title("Double Pendulum Simulation")
 
         y0 = [np.pi / 2, 0, np.pi / 2, 0]
@@ -224,9 +230,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.simulation_running = False
         self.start_button.setEnabled(True)
         self.ax.clear()
-        self.ax.set_aspect('equal')
-        self.ax.set_xlim(-2, 2)
-        self.ax.set_ylim(-2, 2)
+        self.updatePlotLimits()
         self.ax.set_title("Double Pendulum Simulation")
         self.canvas.draw()
 
