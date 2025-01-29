@@ -13,6 +13,7 @@ class DoublePendulumSimulation(QMainWindow):
         super().__init__()
         self.setWindowTitle("Double Pendulum Simulation")
         self.setGeometry(100, 100, 1200, 800)
+        self.showMaximized()
 
         self.length1 = 1.0
         self.length2 = 1.0
@@ -25,10 +26,13 @@ class DoublePendulumSimulation(QMainWindow):
 
     def initUI(self):
         main_widget = QWidget()
-        main_layout = QVBoxLayout(main_widget)
+        main_layout = QHBoxLayout(main_widget)
+
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
 
         self.canvas = FigureCanvas(Figure(figsize=(5, 5)))
-        main_layout.addWidget(self.canvas)
+        left_layout.addWidget(self.canvas)
 
         self.ax = self.canvas.figure.add_subplot(111)
         self.ax.set_aspect('equal')
@@ -37,7 +41,10 @@ class DoublePendulumSimulation(QMainWindow):
         self.ax.set_title("Double Pendulum Simulation")
 
         control_panel = self.createControlPanel()
-        main_layout.addLayout(control_panel)
+        left_layout.addLayout(control_panel)
+
+        main_layout.addWidget(left_widget, 1)  # Set stretch factor to 1 for left_widget
+        main_layout.addStretch(1)  # Add stretch to push left_widget to the left half
 
         self.setCentralWidget(main_widget)
 
