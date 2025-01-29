@@ -330,20 +330,32 @@ class DoublePendulumSimulation(QMainWindow):
         y_test = predictor.generate_solution()
         y_pred = predictor.predict()
 
-        start_index = 0
-        y_test_sample = y_test[start_index+10:start_index + 510]
-        y_pred_sample = y_pred[start_index:start_index + 500]
+        theta1_pred, theta2_pred = y_pred[:, 0], y_pred[:, 1]
+        x1_pred = self.length1 * np.sin(theta1_pred)
+        y1_pred = -self.length1 * np.cos(theta1_pred)
+        x2_pred = x1_pred + self.length2 * np.sin(theta2_pred)
+        y2_pred = y1_pred - self.length2 * np.cos(theta2_pred)
 
         self.pred_ax.clear()
-        self.pred_ax.plot(y_test_sample[:, 0], label='Theta1 - rzeczywiste', alpha=0.5, linewidth=2.5)
-        self.pred_ax.plot(y_pred_sample[:, 0], label='Theta1 - predykcja', linestyle='dashed', alpha=0.7)
-        self.pred_ax.plot(y_test_sample[:, 1], label='Theta2 - rzeczywiste', alpha=0.5, linewidth=2.5)
-        self.pred_ax.plot(y_pred_sample[:, 1], label='Theta2 - predykcja', linestyle='dashed', alpha=0.7)
-        self.pred_ax.set_title('Porównanie rzeczywistych i przewidywanych trajektorii')
-        self.pred_ax.set_xlabel('Czas')
-        self.pred_ax.set_ylabel('Kąt Theta')
-        self.pred_ax.legend()
-        self.pred_ax.grid()
+        self.pred_ax.set_xlim(-self.length1 - self.length2 - 0.2, self.length1 + self.length2 + 0.2)
+        self.pred_ax.set_ylim(-self.length1 - self.length2 - 0.2, self.length1 + self.length2 + 0.2)
+        self.pred_ax.set_title("RNN Prediction")
+
+        self.pred_line, = self.pred_ax.plot([], [], 'o-', lw=2)
+        self.pred_tip_line, = self.pred_ax.plot([], [], 'r-', lw=1)
+        self.pred_tip_x, self.pred_tip_y = [], []
+
+        def update_pred(frame):
+            self.pred_line.set_data([0, x1_pred[frame], x2_pred[frame]], [0, y1_pred[frame], y2_pred[frame]])
+            self.pred_tip_x.append(x2_pred[frame])
+            self.pred_tip_y.append(y2_pred[frame])
+            self.pred_tip_line.set_data(self.pred_tip_x, self.pred_tip_y)
+            if frame == 0:
+                self.pred_tip_x.clear()
+                self.pred_tip_y.clear()
+            return self.pred_line, self.pred_tip_line
+
+        self.pred_anim = FuncAnimation(self.pred_canvas.figure, update_pred, frames=len(theta1_pred), interval=20, blit=True)
         self.pred_canvas.draw()
 
 
@@ -352,3 +364,4 @@ if __name__ == "__main__":
     window = DoublePendulumSimulation()
     window.show()
     sys.exit(app.exec_())
+        
