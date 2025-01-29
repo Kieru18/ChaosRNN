@@ -58,14 +58,16 @@ class PendulumSimulation(Widget):
             # Set the color to black for all pendulum elements
             Color(0, 0, 0, 1)  # Set color to black
 
-            # Calculate the pendulum positions
-            x1 = self.width / 2 + self.L1 * 100 * np.sin(self.theta1)
-            y1 = self.height / 2 - self.L1 * 100 * np.cos(self.theta1)
+            # Calculate the pendulum positions (centered)
+            center_x = self.width / 2
+            center_y = self.height / 2
+            x1 = center_x + self.L1 * 100 * np.sin(self.theta1)
+            y1 = center_y - self.L1 * 100 * np.cos(self.theta1)
             x2 = x1 + self.L2 * 100 * np.sin(self.theta2)
             y2 = y1 - self.L2 * 100 * np.cos(self.theta2)
 
             # Draw the pendulum lines (in black)
-            Line(points=[self.width / 2, self.height / 2, x1, y1], width=2)
+            Line(points=[center_x, center_y, x1, y1], width=2)
             Line(points=[x1, y1, x2, y2], width=2)
 
             # Draw the pendulum masses (in black)
@@ -75,23 +77,23 @@ class PendulumSimulation(Widget):
 class PendulumApp(App):
     def build(self):
         # Main layout (vertical)
-        main_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        main_layout = BoxLayout(orientation='vertical', padding=20, spacing=20)  # Increased spacing
 
-        # Pendulum simulation widget
-        self.simulation = PendulumSimulation(size_hint=(1, 0.7))
+        # Pendulum simulation widget (smaller height)
+        self.simulation = PendulumSimulation(size_hint=(1, 0.4))  # Reduced height
         main_layout.add_widget(self.simulation)
 
         # Control panel (vertical)
-        control_panel = BoxLayout(orientation='vertical', size_hint=(1, 0.3), spacing=10)
+        control_panel = GridLayout(cols=1, size_hint=(1, 0.6), spacing=30, row_default_height=100, row_force_default=True)  # Increased spacing and row height
 
         # Masses row
-        masses_row = BoxLayout(orientation='horizontal', spacing=10)
+        masses_row = BoxLayout(orientation='horizontal', spacing=20)
         masses_row.add_widget(self.create_input_group('Mass 1', 'm1'))
         masses_row.add_widget(self.create_input_group('Mass 2', 'm2'))
         control_panel.add_widget(masses_row)
 
         # Lengths row
-        lengths_row = BoxLayout(orientation='horizontal', spacing=10)
+        lengths_row = BoxLayout(orientation='horizontal', spacing=20)
         lengths_row.add_widget(self.create_input_group('Length 1', 'L1'))
         lengths_row.add_widget(self.create_input_group('Length 2', 'L2'))
         control_panel.add_widget(lengths_row)
@@ -100,7 +102,7 @@ class PendulumApp(App):
         gravity_group = self.create_input_group('Gravity', 'g')
         control_panel.add_widget(gravity_group)
 
-        start_button = Button(text='Start Simulation', size_hint=(1, None), height=50)
+        start_button = Button(text='Start Simulation', size_hint=(1, None), height=60)
         start_button.bind(on_press=self.start_simulation)
         control_panel.add_widget(start_button)
 
@@ -111,19 +113,19 @@ class PendulumApp(App):
 
     def create_input_group(self, label_text, parameter):
         """Helper function to create a label, input field, and slider group."""
-        group = BoxLayout(orientation='vertical', spacing=5)
+        group = BoxLayout(orientation='vertical', spacing=10)
 
         # Label
-        label = Label(text=label_text, color=(0, 0, 0, 1), size_hint=(1, None), height=30)
+        label = Label(text=label_text, color=(0, 0, 0, 1), size_hint=(1, None), height=40)
         group.add_widget(label)
 
         # Text input
-        input_field = TextInput(text='1.0', multiline=False, size_hint=(1, None), height=30)
+        input_field = TextInput(text='1.0', multiline=False, size_hint=(1, None), height=40)
         setattr(self, f'{parameter}_input', input_field)
         group.add_widget(input_field)
 
         # Slider
-        slider = Slider(min=0.1, max=10, value=1.0, size_hint=(1, None), height=30)
+        slider = Slider(min=0.1, max=10, value=1.0, size_hint=(1, None), height=40)
         slider.bind(value=lambda instance, value: self.on_parameter_change(parameter, value))
         setattr(self, f'{parameter}_slider', slider)
         group.add_widget(slider)
@@ -140,4 +142,5 @@ class PendulumApp(App):
 
 if __name__ == '__main__':
     Window.clearcolor = (1, 1, 1, 1)  # Set background color to white
+    Window.maximize()  # Maximize the window with controls like close, minimize, etc.
     PendulumApp().run()
