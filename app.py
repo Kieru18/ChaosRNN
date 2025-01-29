@@ -181,6 +181,16 @@ class DoublePendulumSimulation(QMainWindow):
 
         self.simulation_running = True
         self.start_button.setEnabled(False)
+        self.length1_slider.setEnabled(False)
+        self.length1_input.setEnabled(False)
+        self.length2_slider.setEnabled(False)
+        self.length2_input.setEnabled(False)
+        self.mass1_slider.setEnabled(False)
+        self.mass1_input.setEnabled(False)
+        self.mass2_slider.setEnabled(False)
+        self.mass2_input.setEnabled(False)
+        self.gravity_slider.setEnabled(False)
+        self.gravity_input.setEnabled(False)
 
         self.ax.clear()
         self.updatePlotLimits()
@@ -229,6 +239,16 @@ class DoublePendulumSimulation(QMainWindow):
             self.anim.event_source.stop()
         self.simulation_running = False
         self.start_button.setEnabled(True)
+        self.length1_slider.setEnabled(True)
+        self.length1_input.setEnabled(True)
+        self.length2_slider.setEnabled(True)
+        self.length2_input.setEnabled(True)
+        self.mass1_slider.setEnabled(True)
+        self.mass1_input.setEnabled(True)
+        self.mass2_slider.setEnabled(True)
+        self.mass2_input.setEnabled(True)
+        self.gravity_slider.setEnabled(True)
+        self.gravity_input.setEnabled(True)
         self.ax.clear()
         self.updatePlotLimits()
         self.ax.set_title("Double Pendulum Simulation")
