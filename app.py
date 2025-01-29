@@ -8,7 +8,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.slider import Slider
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
-from kivy.graphics import Line, Ellipse
+from kivy.graphics import Line, Ellipse, Color
 from kivy.clock import Clock
 from kivy.core.window import Window
 
@@ -37,6 +37,7 @@ class PendulumSimulation(Widget):
         self.theta2 = np.pi
         self.sol = None
         self.simulating = False
+        self.draw_pendulum()  # Draw pendulum on start
 
     def start_simulation(self):
         y0 = [self.theta1, 0, self.theta2, 0]
@@ -54,12 +55,20 @@ class PendulumSimulation(Widget):
     def draw_pendulum(self):
         self.canvas.clear()
         with self.canvas:
+            # Set the color to black for all pendulum elements
+            Color(0, 0, 0, 1)  # Set color to black
+
+            # Calculate the pendulum positions
             x1 = self.width / 2 + self.L1 * 100 * np.sin(self.theta1)
             y1 = self.height / 2 - self.L1 * 100 * np.cos(self.theta1)
             x2 = x1 + self.L2 * 100 * np.sin(self.theta2)
             y2 = y1 - self.L2 * 100 * np.cos(self.theta2)
+
+            # Draw the pendulum lines (in black)
             Line(points=[self.width / 2, self.height / 2, x1, y1], width=2)
             Line(points=[x1, y1, x2, y2], width=2)
+
+            # Draw the pendulum masses (in black)
             Ellipse(pos=(x1 - 10, y1 - 10), size=(20, 20))
             Ellipse(pos=(x2 - 10, y2 - 10), size=(20, 20))
 
@@ -72,82 +81,59 @@ class PendulumApp(App):
         self.simulation = PendulumSimulation(size_hint=(1, 0.7))
         main_layout.add_widget(self.simulation)
 
-        # Control panel (horizontal)
-        control_panel = BoxLayout(orientation='horizontal', size_hint=(1, 0.3), spacing=10)
+        # Control panel (vertical)
+        control_panel = BoxLayout(orientation='vertical', size_hint=(1, 0.3), spacing=10)
 
-        # Left side: Sliders and inputs for masses and lengths
-        left_panel = GridLayout(cols=2, spacing=10, size_hint=(0.5, 1))
+        # Masses row
+        masses_row = BoxLayout(orientation='horizontal', spacing=10)
+        masses_row.add_widget(self.create_input_group('Mass 1', 'm1'))
+        masses_row.add_widget(self.create_input_group('Mass 2', 'm2'))
+        control_panel.add_widget(masses_row)
 
-        left_panel.add_widget(Label(text='Mass 1'))
-        self.m1_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
-        left_panel.add_widget(self.m1_input)
-        self.m1_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
-        self.m1_slider.bind(value=self.on_m1_change)
-        left_panel.add_widget(self.m1_slider)
+        # Lengths row
+        lengths_row = BoxLayout(orientation='horizontal', spacing=10)
+        lengths_row.add_widget(self.create_input_group('Length 1', 'L1'))
+        lengths_row.add_widget(self.create_input_group('Length 2', 'L2'))
+        control_panel.add_widget(lengths_row)
 
-        left_panel.add_widget(Label(text='Mass 2'))
-        self.m2_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
-        left_panel.add_widget(self.m2_input)
-        self.m2_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
-        self.m2_slider.bind(value=self.on_m2_change)
-        left_panel.add_widget(self.m2_slider)
-
-        left_panel.add_widget(Label(text='Length 1'))
-        self.L1_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
-        left_panel.add_widget(self.L1_input)
-        self.L1_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
-        self.L1_slider.bind(value=self.on_L1_change)
-        left_panel.add_widget(self.L1_slider)
-
-        left_panel.add_widget(Label(text='Length 2'))
-        self.L2_input = TextInput(text='1.0', multiline=False, size_hint=(0.5, None), height=30)
-        left_panel.add_widget(self.L2_input)
-        self.L2_slider = Slider(min=0.1, max=10, value=1.0, size_hint=(0.5, None), height=30)
-        self.L2_slider.bind(value=self.on_L2_change)
-        left_panel.add_widget(self.L2_slider)
-
-        control_panel.add_widget(left_panel)
-
-        # Right side: Gravity input and start button
-        right_panel = BoxLayout(orientation='vertical', spacing=10, size_hint=(0.5, 1))
-
-        right_panel.add_widget(Label(text='Gravity'))
-        self.g_input = TextInput(text='9.81', multiline=False, size_hint=(1, None), height=30)
-        right_panel.add_widget(self.g_input)
-        self.g_slider = Slider(min=1, max=20, value=9.81, size_hint=(1, None), height=30)
-        self.g_slider.bind(value=self.on_g_change)
-        right_panel.add_widget(self.g_slider)
+        # Gravity and start button
+        gravity_group = self.create_input_group('Gravity', 'g')
+        control_panel.add_widget(gravity_group)
 
         start_button = Button(text='Start Simulation', size_hint=(1, None), height=50)
         start_button.bind(on_press=self.start_simulation)
-        right_panel.add_widget(start_button)
-
-        control_panel.add_widget(right_panel)
+        control_panel.add_widget(start_button)
 
         # Add control panel to main layout
         main_layout.add_widget(control_panel)
 
         return main_layout
 
-    def on_m1_change(self, instance, value):
-        self.simulation.m1 = value
-        self.m1_input.text = str(value)
+    def create_input_group(self, label_text, parameter):
+        """Helper function to create a label, input field, and slider group."""
+        group = BoxLayout(orientation='vertical', spacing=5)
 
-    def on_m2_change(self, instance, value):
-        self.simulation.m2 = value
-        self.m2_input.text = str(value)
+        # Label
+        label = Label(text=label_text, color=(0, 0, 0, 1), size_hint=(1, None), height=30)
+        group.add_widget(label)
 
-    def on_L1_change(self, instance, value):
-        self.simulation.L1 = value
-        self.L1_input.text = str(value)
+        # Text input
+        input_field = TextInput(text='1.0', multiline=False, size_hint=(1, None), height=30)
+        setattr(self, f'{parameter}_input', input_field)
+        group.add_widget(input_field)
 
-    def on_L2_change(self, instance, value):
-        self.simulation.L2 = value
-        self.L2_input.text = str(value)
+        # Slider
+        slider = Slider(min=0.1, max=10, value=1.0, size_hint=(1, None), height=30)
+        slider.bind(value=lambda instance, value: self.on_parameter_change(parameter, value))
+        setattr(self, f'{parameter}_slider', slider)
+        group.add_widget(slider)
 
-    def on_g_change(self, instance, value):
-        self.simulation.g = value
-        self.g_input.text = str(value)
+        return group
+
+    def on_parameter_change(self, parameter, value):
+        """Update the simulation parameter when the slider changes."""
+        setattr(self.simulation, parameter, value)
+        getattr(self, f'{parameter}_input').text = str(value)
 
     def start_simulation(self, instance):
         self.simulation.start_simulation()
