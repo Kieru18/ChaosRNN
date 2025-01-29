@@ -265,10 +265,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.mass2_input.setEnabled(True)
         self.gravity_slider.setEnabled(True)
         self.gravity_input.setEnabled(True)
-        self.ax.clear()
-        self.updatePlotLimits()
-        self.ax.set_title("Double Pendulum Simulation")
-        self.canvas.draw()
+        self.updatePlot()
 
     def onMousePress(self, event):
         if event.inaxes != self.ax:
