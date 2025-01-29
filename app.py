@@ -106,6 +106,10 @@ class DoublePendulumSimulation(QMainWindow):
         self.start_button.clicked.connect(self.startSimulation)
         control_layout.addWidget(self.start_button)
 
+        self.stop_button = QPushButton("Stop Simulation")
+        self.stop_button.clicked.connect(self.stopSimulation)
+        control_layout.addWidget(self.stop_button)
+
         return control_layout
 
     def updateLength1(self):
@@ -149,6 +153,8 @@ class DoublePendulumSimulation(QMainWindow):
         self.gravity_slider.setValue(int(self.gravity * 10))
 
     def startSimulation(self):
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
         self.ax.clear()
         self.ax.set_xlim(-2, 2)
         self.ax.set_ylim(-2, 2)
@@ -190,6 +196,17 @@ class DoublePendulumSimulation(QMainWindow):
             return self.line, self.tip_line
 
         self.anim = FuncAnimation(self.canvas.figure, update, frames=len(t_eval), interval=20, blit=True)
+        self.canvas.draw()
+
+    def stopSimulation(self):
+        if hasattr(self, 'anim'):
+            self.anim.event_source.stop()
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        self.ax.clear()
+        self.ax.set_xlim(-2, 2)
+        self.ax.set_ylim(-2, 2)
+        self.ax.set_title("Double Pendulum Simulation")
         self.canvas.draw()
 
 if __name__ == "__main__":
