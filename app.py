@@ -1,146 +1,199 @@
+import sys
 import numpy as np
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSlider, QLineEdit, QPushButton
+from PyQt5.QtCore import Qt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.animation import FuncAnimation
 from scipy.integrate import solve_ivp
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
-from kivy.uix.slider import Slider
-from kivy.uix.button import Button
-from kivy.uix.widget import Widget
-from kivy.graphics import Line, Ellipse, Color
-from kivy.clock import Clock
-from kivy.core.window import Window
 
-# Pendulum simulation code
-def equations(t, y, m1, m2, L1, L2, g):
-    theta1, z1, theta2, z2 = y
-    c, s = np.cos(theta1 - theta2), np.sin(theta1 - theta2)
 
-    theta1_dot = z1
-    z1_dot = (m2 * g * np.sin(theta2) * c - m2 * s * (L1 * z1**2 * c + L2 * z2**2) -
-              (m1 + m2) * g * np.sin(theta1)) / L1 / (m1 + m2 * s**2)
-    theta2_dot = z2
-    z2_dot = ((m1 + m2) * (L1 * z1**2 * s - g * np.sin(theta2) + g * np.sin(theta1) * c) +
-              m2 * L2 * z2**2 * s * c) / L2 / (m1 + m2 * s**2)
-    return [theta1_dot, z1_dot, theta2_dot, z2_dot]
+class DoublePendulumSimulation(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Double Pendulum Simulation")
+        self.setGeometry(100, 100, 1200, 600)
 
-class PendulumSimulation(Widget):
-    def __init__(self, **kwargs):
-        super(PendulumSimulation, self).__init__(**kwargs)
-        self.m1 = 1.0
-        self.m2 = 1.0
-        self.L1 = 1.0
-        self.L2 = 1.0
-        self.g = 9.81
-        self.theta1 = np.pi
-        self.theta2 = np.pi
-        self.sol = None
-        self.simulating = False
-        self.draw_pendulum()  # Draw pendulum on start
+        self.length1 = 1.0
+        self.length2 = 1.0
+        self.mass1 = 1.0
+        self.mass2 = 1.0
+        self.gravity = 9.81
 
-    def start_simulation(self):
-        y0 = [self.theta1, 0, self.theta2, 0]
+        self.initUI()
+
+    def initUI(self):
+        main_widget = QWidget()
+        main_layout = QHBoxLayout(main_widget)
+
+        control_panel = self.createControlPanel()
+        main_layout.addLayout(control_panel)
+
+        self.canvas = FigureCanvas(Figure(figsize=(5, 4)))
+        main_layout.addWidget(self.canvas)
+
+        self.ax = self.canvas.figure.add_subplot(111)
+        self.ax.set_xlim(-2, 2)
+        self.ax.set_ylim(-2, 2)
+        self.ax.set_title("Double Pendulum Simulation")
+
+        self.setCentralWidget(main_widget)
+
+    def createControlPanel(self):
+        control_layout = QVBoxLayout()
+
+        control_layout.addWidget(QLabel("Length 1"))
+        self.length1_slider = QSlider(Qt.Horizontal)
+        self.length1_slider.setMinimum(1)
+        self.length1_slider.setMaximum(200)
+        self.length1_slider.setValue(100)
+        self.length1_slider.valueChanged.connect(self.updateLength1)
+        control_layout.addWidget(self.length1_slider)
+
+        self.length1_input = QLineEdit("1.0")
+        self.length1_input.returnPressed.connect(self.updateLength1FromInput)
+        control_layout.addWidget(self.length1_input)
+
+        control_layout.addWidget(QLabel("Length 2"))
+        self.length2_slider = QSlider(Qt.Horizontal)
+        self.length2_slider.setMinimum(1)
+        self.length2_slider.setMaximum(200)
+        self.length2_slider.setValue(100)
+        self.length2_slider.valueChanged.connect(self.updateLength2)
+        control_layout.addWidget(self.length2_slider)
+
+        self.length2_input = QLineEdit("1.0")
+        self.length2_input.returnPressed.connect(self.updateLength2FromInput)
+        control_layout.addWidget(self.length2_input)
+
+        control_layout.addWidget(QLabel("Mass 1"))
+        self.mass1_slider = QSlider(Qt.Horizontal)
+        self.mass1_slider.setMinimum(1)
+        self.mass1_slider.setMaximum(200)
+        self.mass1_slider.setValue(100)
+        self.mass1_slider.valueChanged.connect(self.updateMass1)
+        control_layout.addWidget(self.mass1_slider)
+
+        self.mass1_input = QLineEdit("1.0")
+        self.mass1_input.returnPressed.connect(self.updateMass1FromInput)
+        control_layout.addWidget(self.mass1_input)
+
+        control_layout.addWidget(QLabel("Mass 2"))
+        self.mass2_slider = QSlider(Qt.Horizontal)
+        self.mass2_slider.setMinimum(1)
+        self.mass2_slider.setMaximum(200)
+        self.mass2_slider.setValue(100)
+        self.mass2_slider.valueChanged.connect(self.updateMass2)
+        control_layout.addWidget(self.mass2_slider)
+
+        self.mass2_input = QLineEdit("1.0")
+        self.mass2_input.returnPressed.connect(self.updateMass2FromInput)
+        control_layout.addWidget(self.mass2_input)
+
+        control_layout.addWidget(QLabel("Gravity"))
+        self.gravity_slider = QSlider(Qt.Horizontal)
+        self.gravity_slider.setMinimum(1)
+        self.gravity_slider.setMaximum(200)
+        self.gravity_slider.setValue(98)
+        self.gravity_slider.valueChanged.connect(self.updateGravity)
+        control_layout.addWidget(self.gravity_slider)
+
+        self.gravity_input = QLineEdit("9.81")
+        self.gravity_input.returnPressed.connect(self.updateGravityFromInput)
+        control_layout.addWidget(self.gravity_input)
+
+        self.start_button = QPushButton("Start Simulation")
+        self.start_button.clicked.connect(self.startSimulation)
+        control_layout.addWidget(self.start_button)
+
+        return control_layout
+
+    def updateLength1(self):
+        self.length1 = self.length1_slider.value() / 100.0
+        self.length1_input.setText(str(self.length1))
+
+    def updateLength1FromInput(self):
+        self.length1 = float(self.length1_input.text())
+        self.length1_slider.setValue(int(self.length1 * 100))
+
+    def updateLength2(self):
+        self.length2 = self.length2_slider.value() / 100.0
+        self.length2_input.setText(str(self.length2))
+
+    def updateLength2FromInput(self):
+        self.length2 = float(self.length2_input.text())
+        self.length2_slider.setValue(int(self.length2 * 100))
+
+    def updateMass1(self):
+        self.mass1 = self.mass1_slider.value() / 100.0
+        self.mass1_input.setText(str(self.mass1))
+
+    def updateMass1FromInput(self):
+        self.mass1 = float(self.mass1_input.text())
+        self.mass1_slider.setValue(int(self.mass1 * 100))
+
+    def updateMass2(self):
+        self.mass2 = self.mass2_slider.value() / 100.0
+        self.mass2_input.setText(str(self.mass2))
+
+    def updateMass2FromInput(self):
+        self.mass2 = float(self.mass2_input.text())
+        self.mass2_slider.setValue(int(self.mass2 * 100))
+
+    def updateGravity(self):
+        self.gravity = self.gravity_slider.value() / 10.0
+        self.gravity_input.setText(str(self.gravity))
+
+    def updateGravityFromInput(self):
+        self.gravity = float(self.gravity_input.text())
+        self.gravity_slider.setValue(int(self.gravity * 10))
+
+    def startSimulation(self):
+        self.ax.clear()
+        self.ax.set_xlim(-2, 2)
+        self.ax.set_ylim(-2, 2)
+        self.ax.set_title("Double Pendulum Simulation")
+
+        y0 = [np.pi / 2, 0, np.pi / 2, 0]
         t_span = (0, 10)
-        t_eval = np.linspace(0, 10, 1000)
-        self.sol = solve_ivp(equations, t_span, y0, args=(self.m1, self.m2, self.L1, self.L2, self.g), t_eval=t_eval)
-        self.simulating = True
-        Clock.schedule_interval(self.update, 1.0 / 60.0)
+        t_eval = np.linspace(0, 10, 400)
 
-    def update(self, dt):
-        if self.simulating and self.sol is not None:
-            self.theta1, self.theta2 = self.sol.y[0][-1], self.sol.y[2][-1]
-            self.draw_pendulum()
+        def equations(t, y):
+            theta1, z1, theta2, z2 = y
+            c, s = np.cos(theta1 - theta2), np.sin(theta1 - theta2)
 
-    def draw_pendulum(self):
-        self.canvas.clear()
-        with self.canvas:
-            # Set the color to black for all pendulum elements
-            Color(0, 0, 0, 1)  # Set color to black
+            theta1_dot = z1
+            z1_dot = (self.mass2 * self.gravity * np.sin(theta2) * c - self.mass2 * s * (self.length1 * z1**2 * c + self.length2 * z2**2) -
+                      (self.mass1 + self.mass2) * self.gravity * np.sin(theta1)) / self.length1 / (self.mass1 + self.mass2 * s**2)
+            theta2_dot = z2
+            z2_dot = ((self.mass1 + self.mass2) * (self.length1 * z1**2 * s - self.gravity * np.sin(theta2) + self.gravity * np.sin(theta1) * c) +
+                      self.mass2 * self.length2 * z2**2 * s * c) / self.length2 / (self.mass1 + self.mass2 * s**2)
+            return [theta1_dot, z1_dot, theta2_dot, z2_dot]
 
-            # Calculate the pendulum positions (centered)
-            center_x = self.width / 2
-            center_y = self.height / 2
-            x1 = center_x + self.L1 * 100 * np.sin(self.theta1)
-            y1 = center_y - self.L1 * 100 * np.cos(self.theta1)
-            x2 = x1 + self.L2 * 100 * np.sin(self.theta2)
-            y2 = y1 - self.L2 * 100 * np.cos(self.theta2)
+        sol = solve_ivp(equations, t_span, y0, t_eval=t_eval)
 
-            # Draw the pendulum lines (in black)
-            Line(points=[center_x, center_y, x1, y1], width=2)
-            Line(points=[x1, y1, x2, y2], width=2)
+        theta1, theta2 = sol.y[0], sol.y[2]
+        x1 = self.length1 * np.sin(theta1)
+        y1 = -self.length1 * np.cos(theta1)
+        x2 = x1 + self.length2 * np.sin(theta2)
+        y2 = y1 - self.length2 * np.cos(theta2)
 
-            # Draw the pendulum masses (in black)
-            Ellipse(pos=(x1 - 10, y1 - 10), size=(20, 20))
-            Ellipse(pos=(x2 - 10, y2 - 10), size=(20, 20))
+        self.line, = self.ax.plot([], [], 'o-', lw=2)
+        self.tip_line, = self.ax.plot([], [], 'r-', lw=1)
+        self.tip_x, self.tip_y = [], []
 
-class PendulumApp(App):
-    def build(self):
-        # Main layout (vertical)
-        main_layout = BoxLayout(orientation='vertical', padding=20, spacing=20)  # Increased spacing
+        def update(frame):
+            self.line.set_data([0, x1[frame], x2[frame]], [0, y1[frame], y2[frame]])
+            self.tip_x.append(x2[frame])
+            self.tip_y.append(y2[frame])
+            self.tip_line.set_data(self.tip_x, self.tip_y)
+            return self.line, self.tip_line
 
-        # Pendulum simulation widget (smaller height)
-        self.simulation = PendulumSimulation(size_hint=(1, 0.4))  # Reduced height
-        main_layout.add_widget(self.simulation)
+        self.anim = FuncAnimation(self.canvas.figure, update, frames=len(t_eval), interval=20, blit=True)
+        self.canvas.draw()
 
-        # Control panel (vertical)
-        control_panel = GridLayout(cols=1, size_hint=(1, 0.6), spacing=30, row_default_height=100, row_force_default=True)  # Increased spacing and row height
-
-        # Masses row
-        masses_row = BoxLayout(orientation='horizontal', spacing=20)
-        masses_row.add_widget(self.create_input_group('Mass 1', 'm1'))
-        masses_row.add_widget(self.create_input_group('Mass 2', 'm2'))
-        control_panel.add_widget(masses_row)
-
-        # Lengths row
-        lengths_row = BoxLayout(orientation='horizontal', spacing=20)
-        lengths_row.add_widget(self.create_input_group('Length 1', 'L1'))
-        lengths_row.add_widget(self.create_input_group('Length 2', 'L2'))
-        control_panel.add_widget(lengths_row)
-
-        # Gravity and start button
-        gravity_group = self.create_input_group('Gravity', 'g')
-        control_panel.add_widget(gravity_group)
-
-        start_button = Button(text='Start Simulation', size_hint=(1, None), height=60)
-        start_button.bind(on_press=self.start_simulation)
-        control_panel.add_widget(start_button)
-
-        # Add control panel to main layout
-        main_layout.add_widget(control_panel)
-
-        return main_layout
-
-    def create_input_group(self, label_text, parameter):
-        """Helper function to create a label, input field, and slider group."""
-        group = BoxLayout(orientation='vertical', spacing=10)
-
-        # Label
-        label = Label(text=label_text, color=(0, 0, 0, 1), size_hint=(1, None), height=40)
-        group.add_widget(label)
-
-        # Text input
-        input_field = TextInput(text='1.0', multiline=False, size_hint=(1, None), height=40)
-        setattr(self, f'{parameter}_input', input_field)
-        group.add_widget(input_field)
-
-        # Slider
-        slider = Slider(min=0.1, max=10, value=1.0, size_hint=(1, None), height=40)
-        slider.bind(value=lambda instance, value: self.on_parameter_change(parameter, value))
-        setattr(self, f'{parameter}_slider', slider)
-        group.add_widget(slider)
-
-        return group
-
-    def on_parameter_change(self, parameter, value):
-        """Update the simulation parameter when the slider changes."""
-        setattr(self.simulation, parameter, value)
-        getattr(self, f'{parameter}_input').text = str(value)
-
-    def start_simulation(self, instance):
-        self.simulation.start_simulation()
-
-if __name__ == '__main__':
-    Window.clearcolor = (1, 1, 1, 1)  # Set background color to white
-    Window.maximize()  # Maximize the window with controls like close, minimize, etc.
-    PendulumApp().run()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = DoublePendulumSimulation()
+    window.show()
+    sys.exit(app.exec_())
