@@ -12,103 +12,111 @@ class DoublePendulumSimulation(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Double Pendulum Simulation")
-        self.setGeometry(100, 100, 1200, 600)
+        self.setGeometry(100, 100, 1200, 800)
 
         self.length1 = 1.0
         self.length2 = 1.0
         self.mass1 = 1.0
         self.mass2 = 1.0
         self.gravity = 9.81
+        self.simulation_running = False
 
         self.initUI()
 
     def initUI(self):
         main_widget = QWidget()
-        main_layout = QHBoxLayout(main_widget)
+        main_layout = QVBoxLayout(main_widget)
 
-        control_panel = self.createControlPanel()
-        main_layout.addLayout(control_panel)
-
-        self.canvas = FigureCanvas(Figure(figsize=(5, 4)))
+        self.canvas = FigureCanvas(Figure(figsize=(5, 5)))
         main_layout.addWidget(self.canvas)
 
         self.ax = self.canvas.figure.add_subplot(111)
+        self.ax.set_aspect('equal')
         self.ax.set_xlim(-2, 2)
         self.ax.set_ylim(-2, 2)
         self.ax.set_title("Double Pendulum Simulation")
+
+        control_panel = self.createControlPanel()
+        main_layout.addLayout(control_panel)
 
         self.setCentralWidget(main_widget)
 
     def createControlPanel(self):
         control_layout = QVBoxLayout()
 
-        control_layout.addWidget(QLabel("Length 1"))
+        lengths_layout = QHBoxLayout()
+        lengths_layout.addWidget(QLabel("Length 1"))
         self.length1_slider = QSlider(Qt.Horizontal)
         self.length1_slider.setMinimum(1)
         self.length1_slider.setMaximum(200)
         self.length1_slider.setValue(100)
         self.length1_slider.valueChanged.connect(self.updateLength1)
-        control_layout.addWidget(self.length1_slider)
-
+        lengths_layout.addWidget(self.length1_slider)
         self.length1_input = QLineEdit("1.0")
         self.length1_input.returnPressed.connect(self.updateLength1FromInput)
-        control_layout.addWidget(self.length1_input)
+        lengths_layout.addWidget(self.length1_input)
+        control_layout.addLayout(lengths_layout)
 
-        control_layout.addWidget(QLabel("Length 2"))
+        lengths_layout = QHBoxLayout()
+        lengths_layout.addWidget(QLabel("Length 2"))
         self.length2_slider = QSlider(Qt.Horizontal)
         self.length2_slider.setMinimum(1)
         self.length2_slider.setMaximum(200)
         self.length2_slider.setValue(100)
         self.length2_slider.valueChanged.connect(self.updateLength2)
-        control_layout.addWidget(self.length2_slider)
-
+        lengths_layout.addWidget(self.length2_slider)
         self.length2_input = QLineEdit("1.0")
         self.length2_input.returnPressed.connect(self.updateLength2FromInput)
-        control_layout.addWidget(self.length2_input)
+        lengths_layout.addWidget(self.length2_input)
+        control_layout.addLayout(lengths_layout)
 
-        control_layout.addWidget(QLabel("Mass 1"))
+        masses_layout = QHBoxLayout()
+        masses_layout.addWidget(QLabel("Mass 1"))
         self.mass1_slider = QSlider(Qt.Horizontal)
         self.mass1_slider.setMinimum(1)
         self.mass1_slider.setMaximum(200)
         self.mass1_slider.setValue(100)
         self.mass1_slider.valueChanged.connect(self.updateMass1)
-        control_layout.addWidget(self.mass1_slider)
-
+        masses_layout.addWidget(self.mass1_slider)
         self.mass1_input = QLineEdit("1.0")
         self.mass1_input.returnPressed.connect(self.updateMass1FromInput)
-        control_layout.addWidget(self.mass1_input)
+        masses_layout.addWidget(self.mass1_input)
+        control_layout.addLayout(masses_layout)
 
-        control_layout.addWidget(QLabel("Mass 2"))
+        masses_layout = QHBoxLayout()
+        masses_layout.addWidget(QLabel("Mass 2"))
         self.mass2_slider = QSlider(Qt.Horizontal)
         self.mass2_slider.setMinimum(1)
         self.mass2_slider.setMaximum(200)
         self.mass2_slider.setValue(100)
         self.mass2_slider.valueChanged.connect(self.updateMass2)
-        control_layout.addWidget(self.mass2_slider)
-
+        masses_layout.addWidget(self.mass2_slider)
         self.mass2_input = QLineEdit("1.0")
         self.mass2_input.returnPressed.connect(self.updateMass2FromInput)
-        control_layout.addWidget(self.mass2_input)
+        masses_layout.addWidget(self.mass2_input)
+        control_layout.addLayout(masses_layout)
 
-        control_layout.addWidget(QLabel("Gravity"))
+        gravity_layout = QHBoxLayout()
+        gravity_layout.addWidget(QLabel("Gravity"))
         self.gravity_slider = QSlider(Qt.Horizontal)
         self.gravity_slider.setMinimum(1)
         self.gravity_slider.setMaximum(200)
         self.gravity_slider.setValue(98)
         self.gravity_slider.valueChanged.connect(self.updateGravity)
-        control_layout.addWidget(self.gravity_slider)
-
+        gravity_layout.addWidget(self.gravity_slider)
         self.gravity_input = QLineEdit("9.81")
         self.gravity_input.returnPressed.connect(self.updateGravityFromInput)
-        control_layout.addWidget(self.gravity_input)
+        gravity_layout.addWidget(self.gravity_input)
+        control_layout.addLayout(gravity_layout)
 
+        buttons_layout = QHBoxLayout()
         self.start_button = QPushButton("Start Simulation")
         self.start_button.clicked.connect(self.startSimulation)
-        control_layout.addWidget(self.start_button)
-
+        buttons_layout.addWidget(self.start_button)
         self.stop_button = QPushButton("Stop Simulation")
         self.stop_button.clicked.connect(self.stopSimulation)
-        control_layout.addWidget(self.stop_button)
+        buttons_layout.addWidget(self.stop_button)
+        control_layout.addLayout(buttons_layout)
 
         return control_layout
 
@@ -153,9 +161,14 @@ class DoublePendulumSimulation(QMainWindow):
         self.gravity_slider.setValue(int(self.gravity * 10))
 
     def startSimulation(self):
+        if self.simulation_running:
+            return
+
+        self.simulation_running = True
         self.start_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
+
         self.ax.clear()
+        self.ax.set_aspect('equal')
         self.ax.set_xlim(-2, 2)
         self.ax.set_ylim(-2, 2)
         self.ax.set_title("Double Pendulum Simulation")
@@ -201,9 +214,10 @@ class DoublePendulumSimulation(QMainWindow):
     def stopSimulation(self):
         if hasattr(self, 'anim'):
             self.anim.event_source.stop()
+        self.simulation_running = False
         self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
         self.ax.clear()
+        self.ax.set_aspect('equal')
         self.ax.set_xlim(-2, 2)
         self.ax.set_ylim(-2, 2)
         self.ax.set_title("Double Pendulum Simulation")
