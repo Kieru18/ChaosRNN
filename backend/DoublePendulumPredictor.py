@@ -9,7 +9,7 @@ NUM_TRAJECTORIES = 120
 T_SPAN = (0, 10)
 T_EVAL = np.linspace(0, 10, 1000)
 SEQ_LEN = 10
-PATH = 'models/trained_modelLSTM_50.keras'
+PATH = 'backend\\models\\trained_modelLSTM_50.keras'
 MODEL = 'LSTM'
 
 class DoublePendulumPredictor:
@@ -28,7 +28,11 @@ class DoublePendulumPredictor:
         self.load_model()
         
     def load_model(self):
-        if not os.path.exists(self.model_path):
+        if not os.path.exists(os.path.join(os.getcwd(), self.model_path)):
+            print(f"Ścieżka do bieżącego katalogu: {os.getcwd()}")
+            print(f"Ścieżka do modelu: {self.model_path}")
+            print(f"Ścieżka : {os.path.join(os.getcwd(), self.model_path)}")
+            print(f"Model nie istnieje. Tworzenie nowego modelu.")
             self.compose_model()
         
         self.model = load_model(self.model_path)

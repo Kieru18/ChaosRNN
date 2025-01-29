@@ -6,6 +6,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
 from scipy.integrate import solve_ivp
+from backend.DoublePendulumPredictor import DoublePendulumPredictor
 
 
 class DoublePendulumSimulation(QMainWindow):
@@ -45,7 +46,21 @@ class DoublePendulumSimulation(QMainWindow):
         left_layout.addLayout(control_panel)
 
         main_layout.addWidget(left_widget, 1)  # Set stretch factor to 1 for left_widget
-        main_layout.addStretch(1)  # Add stretch to push left_widget to the left half
+
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+
+        self.pred_canvas = FigureCanvas(Figure(figsize=(5, 5)))
+        right_layout.addWidget(self.pred_canvas)
+
+        self.pred_ax = self.pred_canvas.figure.add_subplot(111)
+        self.pred_ax.set_title("RNN Prediction")
+
+        self.predict_button = QPushButton("Predict")
+        self.predict_button.clicked.connect(self.predictTrajectory)
+        right_layout.addWidget(self.predict_button)
+
+        main_layout.addWidget(right_widget, 1)  # Set stretch factor to 1 for right_widget
 
         self.setCentralWidget(main_widget)
 
@@ -308,6 +323,28 @@ class DoublePendulumSimulation(QMainWindow):
         y2 = y1 - self.length2 * np.cos(self.theta2)
         self.ax.plot([0, x1, x2], [0, y1, y2], 'o-', lw=2)
         self.canvas.draw()
+
+    def predictTrajectory(self):
+        predictor = DoublePendulumPredictor(self.length1, self.length2, self.mass1, self.mass2, self.gravity, 
+                                            self.theta1, self.theta2, 0, 0)
+        y_test = predictor.generate_solution()
+        y_pred = predictor.predict()
+
+        start_index = 0
+        y_test_sample = y_test[start_index+10:start_index + 510]
+        y_pred_sample = y_pred[start_index:start_index + 500]
+
+        self.pred_ax.clear()
+        self.pred_ax.plot(y_test_sample[:, 0], label='Theta1 - rzeczywiste', alpha=0.5, linewidth=2.5)
+        self.pred_ax.plot(y_pred_sample[:, 0], label='Theta1 - predykcja', linestyle='dashed', alpha=0.7)
+        self.pred_ax.plot(y_test_sample[:, 1], label='Theta2 - rzeczywiste', alpha=0.5, linewidth=2.5)
+        self.pred_ax.plot(y_pred_sample[:, 1], label='Theta2 - predykcja', linestyle='dashed', alpha=0.7)
+        self.pred_ax.set_title('Porównanie rzeczywistych i przewidywanych trajektorii')
+        self.pred_ax.set_xlabel('Czas')
+        self.pred_ax.set_ylabel('Kąt Theta')
+        self.pred_ax.legend()
+        self.pred_ax.grid()
+        self.pred_canvas.draw()
 
 
 if __name__ == "__main__":

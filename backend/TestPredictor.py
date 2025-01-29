@@ -8,6 +8,10 @@ MASS_2 = 1.0
 LENGTH_1 = 1.0
 LENGTH_2 = 1.0
 GRAVITY  = 9.81
+THETA_1 = np.pi * 0.66
+THETA_2 = np.pi * 1.1412
+Z_1 = 1
+Z_2 = 1
 
 def showcase(y_test, y_pred, theta_num):
     plt.figure(figsize=(20, 6))
@@ -23,10 +27,8 @@ def showcase(y_test, y_pred, theta_num):
 
 
 if __name__ == "__main__":
-    predictor = DoublePendulumPredictor(LENGTH_1-0.3, LENGTH_2-0.4, MASS_1+2, MASS_2+4, GRAVITY+4, 
-                                        np.pi * 0.66,
-                                        np.pi * 1.1412, 
-                                        1, 1)
+    predictor = DoublePendulumPredictor(LENGTH_1, LENGTH_2, MASS_1, MASS_2, GRAVITY, 
+                                        THETA_1, THETA_2, Z_1, Z_2)
     
     y_test = predictor.generate_solution()
     y_pred = predictor.predict()
