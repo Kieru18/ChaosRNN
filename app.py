@@ -341,10 +341,12 @@ class DoublePendulumSimulation(QMainWindow):
                                             self.theta1, self.theta2, 0, 0)
         y_test = predictor.generate_solution()
 
-        pred = np.column_stack((self.sol.y[0], self.sol.y[1], self.sol.y[2], self.sol.y[3])) # sus
-        y_pred = predictor.predict(pred)
+        trajectory = np.column_stack((self.sol.y[0], self.sol.y[1], self.sol.y[2], self.sol.y[3]))
+        y_pred = predictor.predict(trajectory)
 
-        theta1_pred, theta2_pred = y_pred[:, 0], y_pred[:, 2]
+        y_pred_joint = np.concatenate((trajectory[:10], y_pred), axis=0)
+
+        theta1_pred, theta2_pred = y_pred_joint[:, 0], y_pred_joint[:, 2]
         x1_pred = self.length1 * np.sin(theta1_pred)
         y1_pred = -self.length1 * np.cos(theta1_pred)
         x2_pred = x1_pred + self.length2 * np.sin(theta2_pred)
