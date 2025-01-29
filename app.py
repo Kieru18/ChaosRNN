@@ -58,7 +58,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.pred_ax.set_title("RNN Prediction")
 
         self.predict_button = QPushButton("Predict")
-        self.predict_button.clicked.connect(self.predictTrajectory)
+        self.predict_button.clicked.connect(self.startPredictionAndSimulation)
         right_layout.addWidget(self.predict_button)
 
         self.stop_predict_button = QPushButton("Stop Prediction")
@@ -329,6 +329,10 @@ class DoublePendulumSimulation(QMainWindow):
         y2 = y1 - self.length2 * np.cos(self.theta2)
         self.ax.plot([0, x1, x2], [0, y1, y2], 'o-', lw=2)
         self.canvas.draw()
+
+    def startPredictionAndSimulation(self):
+        self.startSimulation()
+        self.predictTrajectory()
 
     def predictTrajectory(self):
         if self.prediction_running:
