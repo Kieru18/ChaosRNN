@@ -12,7 +12,7 @@ from backend.DoublePendulumPredictor import DoublePendulumPredictor
 class DoublePendulumSimulation(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Double Pendulum Simulation")
+        self.setWindowTitle("ChaosRNN - Double Pendulum")
         self.setGeometry(100, 100, 1200, 800)
         self.showMaximized()
 
@@ -57,13 +57,21 @@ class DoublePendulumSimulation(QMainWindow):
         self.pred_ax = self.pred_canvas.figure.add_subplot(111)
         self.pred_ax.set_title("RNN Prediction")
 
+        # Add fake buttons to match the layout
+        for _ in range(5):
+            fake_button = QPushButton()
+            fake_button.setEnabled(False)
+            right_layout.addWidget(fake_button)
+
+        predict_stop_layout = QHBoxLayout()
         self.predict_button = QPushButton("Predict")
         self.predict_button.clicked.connect(self.startPredictionAndSimulation)
-        right_layout.addWidget(self.predict_button)
+        predict_stop_layout.addWidget(self.predict_button)
 
         self.stop_predict_button = QPushButton("Stop Prediction")
         self.stop_predict_button.clicked.connect(self.stopPrediction)
-        right_layout.addWidget(self.stop_predict_button)
+        predict_stop_layout.addWidget(self.stop_predict_button)
+        right_layout.addLayout(predict_stop_layout)
 
         main_layout.addWidget(right_widget, 1)  # Set stretch factor to 1 for right_widget
 
