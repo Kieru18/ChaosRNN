@@ -378,6 +378,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.canvas.draw()
 
     def startPredictionAndSimulation(self):
+        self.stopSimulation()
         self.startSimulation()
         self.predictTrajectory()
 
