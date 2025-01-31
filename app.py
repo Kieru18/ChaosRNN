@@ -100,10 +100,13 @@ class DoublePendulumSimulation(QMainWindow):
         self.updatePlot()
 
     def createControlPanel(self):
+        label_width = 60  # Set a fixed width for all labels
         control_layout = QVBoxLayout()
 
         lengths_layout = QHBoxLayout()
-        lengths_layout.addWidget(QLabel("Length 1"))
+        length1_label = QLabel("Length 1")
+        length1_label.setFixedWidth(label_width)
+        lengths_layout.addWidget(length1_label)
         self.length1_slider = QSlider(Qt.Horizontal)
         self.length1_slider.setMinimum(1)
         self.length1_slider.setMaximum(200)
@@ -116,7 +119,9 @@ class DoublePendulumSimulation(QMainWindow):
         control_layout.addLayout(lengths_layout)
 
         lengths_layout = QHBoxLayout()
-        lengths_layout.addWidget(QLabel("Length 2"))
+        length2_label = QLabel("Length 2")
+        length2_label.setFixedWidth(label_width)
+        lengths_layout.addWidget(length2_label)
         self.length2_slider = QSlider(Qt.Horizontal)
         self.length2_slider.setMinimum(1)
         self.length2_slider.setMaximum(200)
@@ -129,7 +134,9 @@ class DoublePendulumSimulation(QMainWindow):
         control_layout.addLayout(lengths_layout)
 
         masses_layout = QHBoxLayout()
-        masses_layout.addWidget(QLabel("Mass 1"))
+        mass1_label = QLabel("Mass 1")
+        mass1_label.setFixedWidth(label_width)
+        masses_layout.addWidget(mass1_label)
         self.mass1_slider = QSlider(Qt.Horizontal)
         self.mass1_slider.setMinimum(1)
         self.mass1_slider.setMaximum(200)
@@ -142,7 +149,9 @@ class DoublePendulumSimulation(QMainWindow):
         control_layout.addLayout(masses_layout)
 
         masses_layout = QHBoxLayout()
-        masses_layout.addWidget(QLabel("Mass 2"))
+        mass2_label = QLabel("Mass 2")
+        mass2_label.setFixedWidth(label_width)
+        masses_layout.addWidget(mass2_label)
         self.mass2_slider = QSlider(Qt.Horizontal)
         self.mass2_slider.setMinimum(1)
         self.mass2_slider.setMaximum(200)
@@ -155,7 +164,9 @@ class DoublePendulumSimulation(QMainWindow):
         control_layout.addLayout(masses_layout)
 
         gravity_layout = QHBoxLayout()
-        gravity_layout.addWidget(QLabel("Gravity"))
+        gravity_label = QLabel("Gravity")
+        gravity_label.setFixedWidth(label_width)
+        gravity_layout.addWidget(gravity_label)
         self.gravity_slider = QSlider(Qt.Horizontal)
         self.gravity_slider.setMinimum(1)
         self.gravity_slider.setMaximum(200)
