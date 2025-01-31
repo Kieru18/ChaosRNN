@@ -1,6 +1,7 @@
 import sys
+import os
 import numpy as np
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSlider, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSlider, QLineEdit, QPushButton, QComboBox
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -26,6 +27,8 @@ class DoublePendulumSimulation(QMainWindow):
 
         self.theta1 = np.pi / 2
         self.theta2 = np.pi / 2
+
+        self.model_path = "backend/models/trained_modelLSTM_50.keras"
 
         self.initUI()
 
@@ -58,10 +61,16 @@ class DoublePendulumSimulation(QMainWindow):
         self.pred_ax.set_title("RNN Prediction")
 
         # Add fake buttons to match the layout
-        for _ in range(5):
+        for _ in range(4):
             fake_button = QPushButton()
             fake_button.setEnabled(False)
             right_layout.addWidget(fake_button)
+
+        # Add model selection dropdown
+        self.model_select = QComboBox()
+        self.model_select.addItems(self.getModelNames())
+        self.model_select.currentIndexChanged.connect(self.updateModelPath)
+        right_layout.addWidget(self.model_select)
 
         predict_stop_layout = QHBoxLayout()
         self.predict_button = QPushButton("Predict")
@@ -161,6 +170,16 @@ class DoublePendulumSimulation(QMainWindow):
         control_layout.addLayout(buttons_layout)
 
         return control_layout
+
+    def getModelNames(self):
+        model_dir = "backend/models"
+        model_files = [f for f in os.listdir(model_dir) if f.startswith("trained_model") and f.endswith(".keras")]
+        model_names = [f.replace("trained_model", "").replace(".keras", "") for f in model_files]
+        return model_names
+
+    def updateModelPath(self):
+        model_name = self.model_select.currentText()
+        self.model_path = f"backend/models/trained_model{model_name}.keras"
 
     def updateLength1(self):
         self.length1 = self.length1_slider.value() / 100.0
@@ -350,7 +369,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.predict_button.setEnabled(False)
 
         predictor = DoublePendulumPredictor(self.length1, self.length2, self.mass1, self.mass2, self.gravity, 
-                                            self.theta1, self.theta2, 0, 0)
+                                            self.theta1, self.theta2, 0, 0, model_path=self.model_path)
         y_test = predictor.generate_solution()
 
         trajectory = np.column_stack((self.sol.y[0], self.sol.y[1], self.sol.y[2], self.sol.y[3]))
