@@ -67,12 +67,17 @@ class DoublePendulumSimulation(QMainWindow):
             fake_button.setEnabled(False)
             right_layout.addWidget(fake_button)
 
-        # Add model selection dropdown
+        # Add model selection dropdown with label
+        model_select_layout = QHBoxLayout()
+        model_label = QLabel("Model")
+        model_label.setFixedWidth(50)  # Set fixed width for the label
+        model_select_layout.addWidget(model_label)
         self.model_select = QComboBox()
         self.model_select.addItems(self.getModelNames())
         self.model_select.currentIndexChanged.connect(self.updateModelPath)
         self.model_select.setCurrentText("LSTM_50")  # Set default selection to LSTM_50
-        right_layout.addWidget(self.model_select)
+        model_select_layout.addWidget(self.model_select)
+        right_layout.addLayout(model_select_layout)
 
         predict_stop_layout = QHBoxLayout()
         self.predict_button = QPushButton("Predict")
