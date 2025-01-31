@@ -9,7 +9,7 @@ NUM_TRAJECTORIES = 120
 T_SPAN = (0, 10)
 T_EVAL = np.linspace(0, 10, 400)
 SEQ_LEN = 10
-PATH = 'backend\\models\\trained_modelLSTM_50.keras'
+PATH = 'backend/models/trained_modelLSTM_50.keras'
 MODEL = 'LSTM'
 
 class DoublePendulumPredictor:
