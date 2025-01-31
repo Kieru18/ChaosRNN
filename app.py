@@ -32,6 +32,7 @@ class DoublePendulumSimulation(QMainWindow):
 
         self.initUI()
 
+
     def initUI(self):
         main_widget = QWidget()
         main_layout = QHBoxLayout(main_widget)
@@ -70,6 +71,7 @@ class DoublePendulumSimulation(QMainWindow):
         self.model_select = QComboBox()
         self.model_select.addItems(self.getModelNames())
         self.model_select.currentIndexChanged.connect(self.updateModelPath)
+        self.model_select.setCurrentText("LSTM_50")  # Set default selection to LSTM_50
         right_layout.addWidget(self.model_select)
 
         predict_stop_layout = QHBoxLayout()
@@ -179,6 +181,8 @@ class DoublePendulumSimulation(QMainWindow):
 
     def updateModelPath(self):
         model_name = self.model_select.currentText()
+        print(f"Selected model: {model_name}")
+        print(f"Model path: backend/models/trained_model{model_name}.keras")
         self.model_path = f"backend/models/trained_model{model_name}.keras"
 
     def updateLength1(self):
